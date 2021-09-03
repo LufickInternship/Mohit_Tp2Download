@@ -1,8 +1,11 @@
 package com.example.streamnow;
 
+import static android.content.ContentValues.TAG;
+
 import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -25,8 +28,8 @@ public class MainActivity extends AppCompatActivity {
 
     public static final int CONNECTION_TIMEOUT = 10000;
     public static final int READ_TIMEOUT = 15000;
-    private RecyclerView mRVFishPrice;
-    private Adapter mAdapter;
+    RecyclerView mRVDog;
+    Adapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,20 +118,24 @@ public class MainActivity extends AppCompatActivity {
             pdLoading.dismiss();
             List<Data> data=new ArrayList<>();
 
+
             pdLoading.dismiss();
             try {
-
                 JSONArray jArray = new JSONArray(result);
 
-                for(int i=0;i<jArray.length();i++){
+                  for(int i=0;i<jArray.length();i++){
                     JSONObject json_data = jArray.getJSONObject(i);
-                    Data Fdata = new Data();
-                    Fdata.DogImage= json_data.getString("message");
-                    data.add(Fdata);
+                    Data fData = new Data();
+                    fData.DogImage= json_data.getString("massage");
+                    data.add(fData);
                 }
 
+                mRVDog = findViewById(R.id.List);
+                LinearLayoutManager manager = new LinearLayoutManager(MainActivity.this);
+                mRVDog.setLayoutManager(manager);
+                mRVDog.setHasFixedSize(true);
                 mAdapter = new Adapter(MainActivity.this, data);
-                mRVFishPrice.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+                mRVDog.setAdapter(mAdapter);
 
             } catch (JSONException e) {
                 Toast.makeText(MainActivity.this, e.toString(), Toast.LENGTH_LONG).show();
