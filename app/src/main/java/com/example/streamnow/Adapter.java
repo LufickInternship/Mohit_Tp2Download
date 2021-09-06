@@ -45,8 +45,7 @@ public class Adapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
 
         MyHolder myHolder= (MyHolder) holder;
         Data current=data.get(position);
-        Glide.with(context).load(current.DogImage).placeholder(R.drawable.ic_img_error).error(R.drawable.ic_img_error)
-                .into(myHolder.ivDog);
+        Glide.with(context).load(current.getDogImage()).error(R.drawable.ic_img_error).into(myHolder.ivDog);
 
     }
 

@@ -15,21 +15,17 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final int CONNECTION_TIMEOUT = 10000;
-    public static final int READ_TIMEOUT = 15000;
     RecyclerView mRVDog;
     Adapter mAdapter;
+    URL url=null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,10 +34,8 @@ public class MainActivity extends AppCompatActivity {
         new AsyncLogin().execute();
     }
 
-    private class AsyncLogin extends AsyncTask<String, String, String> {
+    private class AsyncLogin extends AsyncTask<String, String, List<String>> {
         ProgressDialog pdLoading = new ProgressDialog(MainActivity.this);
-        HttpURLConnection conn;
-        URL url = null;
 
         @Override
         protected void onPreExecute() {
@@ -54,66 +48,31 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected String doInBackground(String... params) {
+        protected List<String> doInBackground(String... params) {
+            List<String> reponses = new ArrayList<>();
+            StringBuilder content = new StringBuilder();
             try {
+                url = new URL("https://api.thedogapi.com/v1/images/search");
 
-                url = new URL("https://dog.ceo/api/breeds/image/random");
-
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-                return e.toString();
+            URLConnection urlConnection = url.openConnection();
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                content.append(line + "\n");
             }
-            try {
+            bufferedReader.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-                conn = (HttpURLConnection) url.openConnection();
-                conn.setReadTimeout(READ_TIMEOUT);
-                conn.setConnectTimeout(CONNECTION_TIMEOUT);
-                conn.setRequestMethod("GET");
+            reponses.add(content.toString());
 
-                conn.setDoOutput(true);
-
-            } catch (IOException e1) {
-                e1.printStackTrace();
-                return e1.toString();
-            }
-
-            try {
-
-                int response_code = conn.getResponseCode();
-
-
-                if (response_code == HttpURLConnection.HTTP_OK) {
-
-
-                    InputStream input = conn.getInputStream();
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-                    StringBuilder result = new StringBuilder();
-                    String line;
-
-                    while ((line = reader.readLine()) != null) {
-                        result.append(line);
-                    }
-
-
-                    return (result.toString());
-
-                } else {
-
-                    return ("unsuccessful");
-                }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                return e.toString();
-            } finally {
-                conn.disconnect();
-            }
-
+        return reponses;
 
         }
 
         @Override
-        protected void onPostExecute(String result) {
+        protected void onPostExecute(List<String> result) {
 
             pdLoading.dismiss();
             List<Data> data=new ArrayList<>();
@@ -121,16 +80,13 @@ public class MainActivity extends AppCompatActivity {
 
             pdLoading.dismiss();
             try {
-                JSONArray jArray = new JSONArray(result);
-
-                  for(int i=0;i<jArray.length();i++){
-                    JSONObject json_data = jArray.getJSONObject(i);
-                    Data fData = new Data();
-                    fData.DogImage= json_data.getString("massage");
-                    data.add(fData);
+                  for(int i=0;i<result.size();i++){
+                      JSONObject baseJsonResponse = new JSONObject(result.get(i));
+                      String image = baseJsonResponse.getString("url");
+                       data.add(new Data(image));
                 }
-
                 mRVDog = findViewById(R.id.List);
+                mAdapter = new Adapter(getApplicationContext(), data);
                 LinearLayoutManager manager = new LinearLayoutManager(MainActivity.this);
                 mRVDog.setLayoutManager(manager);
                 mRVDog.setHasFixedSize(true);
